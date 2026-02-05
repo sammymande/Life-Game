@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeGame V10.2 | 极致黑白版</title>
+    <style>
+        :root {
+            --bg: #FFFFFF;       /* 纯白背景 */
+            --text: #000000;     /* 核心文字：纯黑 */
+            --dim: #555555;      /* 辅助文字：深灰 */
+            --border: #E0E0E0;   /* 边框：浅灰 */
+            --accent: #000000;   /* 强调色：纯黑 */
+            --danger: #D32F2F;   /* 警示红 */
+        }
+        
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        
+        body {
+            background-color: var(--bg); 
+            color: var(--text);
+            font-family: "Songti SC", "Noto Serif SC", "SimSun", "STSong", serif;
+            display: flex; justify-content: center; 
+            min-height: 100vh; margin: 0; padding: 20px;
+            font-size: 15px; 
+            letter-spacing: 0.05em;
+        }
+
+        .app-container { width: 100%; max-width: 460px; }
+
+        /* --- 组件样式 --- */
+        
+        .dashboard-card {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 30px; margin-bottom: 40px;
+        }
+        
+        .progress-container { 
+            background: #F0F0F0; height: 3px; width: 100%; margin: 15px 0; 
+        }
+        .progress-fill { 
+            height: 100%; background: var(--text); width: 0%; 
+        }
+
+        .score-box { 
+            font-size: 2.8rem; 
+            font-family: 'Times New Roman', serif; 
+            margin: 5px 0;
+            display: block;
+            color: var(--text); 
+            font-weight: bold;
+        }
+
+        /* 标题风格 */
+        h2 { 
+            font-size: 14px; 
+            color: var(--dim);
+            margin-bottom: 20px; 
+            font-weight: normal;
+            border-left: 3px solid var(--text); 
+            padding-left: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 核心修改：撤回按钮 - 黑底白字 */
+        .undo-btn {
+            font-size: 12px;
+            color: #FFFFFF;       /* 白字 */
+            background: #000000;  /* 黑底 */
+            cursor: pointer;
+            border: 1px solid #000000;
+            padding: 4px 10px;
+            border-radius: 0;     /* 直角，符合印刷风 */
+            font-family: sans-serif;
+            font-weight: normal;
+            opacity: 1;
+        }
+        .undo-btn:hover { 
+            background: #333333; /* 悬停深灰 */
+            border-color: #333333;
+        }
+        .undo-btn:active { transform: scale(0.95); }
+
+        input, select { 
+            background: transparent; border: none; border-bottom: 1px solid #CCC; 
+            color: var(--text); padding: 10px 5px; font-family: inherit; font-size: 15px; 
+            width: 100%; border-radius: 0;
+        }
+        input:focus, select:focus { border-bottom: 1px solid var(--accent); outline: none; }
+        input::placeholder { color: #999; font-style: italic; }
+
+        .btn { 
+            border: 1px solid var(--text); background: transparent; color: var(--text);
+            padding: 12px 0; cursor: pointer; font-family: inherit; font-size: 14px; 
+            width: 100%; margin-top: 15px; font-weight: bold; 
+        }
+        .btn:hover { background: var(--text); color: var(--bg); }
+        .btn-sm { width: auto; padding: 5px 20px; margin-top: 0; font-size: 12px;}
+
+        .section { margin-bottom: 50px; }
+
+        .task-row {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            padding: 18px 0; border-bottom: 1px solid #F0F0F0;
+        }
+        .task-left { flex: 1; padding-right: 15px; }
+        
+        .highlight-text { color: var(--text); font-size: 16px; font-weight: bold; }
+        .editable { cursor: pointer; border-bottom: 1px dashed #999; padding-bottom: 2px; }
+        .editable:hover { border-bottom: 1px solid #000; }
+
+        .counter-btn {
+            border: 1px solid #CCC; color: var(--text); background: #FFF;
+            padding: 6px 12px; cursor: pointer; min-width: 70px; text-align: center; 
+            font-size: 14px; font-family: 'Times New Roman', serif; user-select: none;
+        }
+        .counter-btn:hover { border-color: #000; background: #F9F9F9; }
+        .counter-btn:active { background: #000; color: #FFF; }
+
+        .shop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .shop-item { 
+            border: 1px solid #EEE; padding: 15px; position: relative; 
+            display: flex; flex-direction: column; justify-content: space-between; min-height: 90px;
+        }
+        .shop-item:hover { border-color: #999; }
+        .del-x { position: absolute; top: 0; right: 0; padding: 10px; cursor: pointer; font-size: 14px; color: #999; }
+        .del-x:hover { color: var(--danger); }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+        .modal-content { border: 1px solid var(--text); background: #FFF; padding: 40px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+
+        .flex-row { display: flex; gap: 15px; align-items: flex-end; }
+        .dim { color: var(--dim); font-size: 12px; font-family: 'Times New Roman', serif;}
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="dashboard-card">
+        <div class="dim">Asymptote / 理想进度</div>
+        <div class="score-box" id="lifeScore">0.0000%</div>
+        <div class="progress-container"><div class="progress-fill" id="lifeBar"></div></div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div class="dim">Reserve / 秩序能量</div>
+            <div style="font-size: 2rem; font-family: 'Times New Roman'; color: var(--text); font-weight: bold;" id="dailyScore">0</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>01 . 宏大愿景</h2>
+        <div class="flex-row">
+            <input type="text" id="vInput" placeholder="在此确立你的终身修行目标...">
+            <button class="btn btn-sm" onclick="addGoal()">确立</button>
+        </div>
+        <div id="goalContainer" style="margin-top: 25px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>
+            02 . 行动清单
+            <span class="undo-btn" onclick="undoLastAction()" title="撤回上一次完成操作">↺ 撤回</span>
+        </h2>
+        
+        <div style="border: 1px solid #EEE; padding: 20px; margin-bottom: 20px; background: #FAFAFA;">
+            <input type="text" id="tInput" placeholder="输入具体行动..." style="font-size: 16px; margin-bottom: 15px;">
+            
+            <div class="flex-row" style="margin-bottom: 15px;">
+                <select id="tTag" onchange="autoSetVal()">
+                    </select>
+                <select id="tPriority" style="width: 100px;">
+                    <option value="1">普通权重</option>
+                    <option value="1.5">重点权重</option>
+                    <option value="2">核心权重</option>
+                </select>
+            </div>
+            
+            <div class="flex-row">
+                <div style="flex:1">
+                    <label class="dim">Quantity / 次数</label>
+                    <input type="number" id="tQty" value="1" style="font-family: 'Times New Roman';">
+                </div>
+                <div style="flex:1">
+                    <label class="dim">Value / 分值</label>
+                    <input type="number" id="tVal" value="10" style="font-family: 'Times New Roman';">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="addTask()">发布行动</button>
+        </div>
+        
+        <div id="tList" style="border-top: 2px solid #EEE;"></div>
+    </div>
+
+    <div class="section">
+        <h2>03 . 秩序回馈</h2>
+        <div class="flex-row" style="margin-bottom: 25px;">
+            <input type="text" id="rewardInput" placeholder="输入奖励名称...">
+            <input type="number" id="rewardCost" value="100" style="width: 80px; font-family: 'Times New Roman';">
+            <button class="btn btn-sm" onclick="addReward()">上架</button>
+        </div>
+        <div id="rewardContainer" class="shop-list"></div>
+    </div>
+
+    <div class="section" style="margin-bottom: 0;">
+        <h2>04 . 数据档案</h2>
+        <div class="flex-row">
+            <button class="btn" onclick="generateReview(7)">周度复盘</button>
+            <button class="btn" onclick="exportData()">备份存档</button>
+        </div>
+    </div>
+
+    <div class="dim" style="text-align: center; margin-top: 60px; opacity: 0.4;">
+        LIFEGAME v10.2 / UNDO ENABLED
+    </div>
+</div>
+
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0; border:none; text-align: center; color: var(--text);">档案快照</h2>
+        <div id="modalBody" style="line-height: 2.2; font-size: 15px; margin-bottom: 30px; font-family: 'Times New Roman'; color: #333;"></div>
+        <button class="btn" onclick="closeModal()">关闭档案</button>
+    </div>
+</div>
+
+<script>
+    const state = {
+        score: parseInt(localStorage.getItem('lg_v101_score')) || 0,
+        goals: JSON.parse(localStorage.getItem('lg_v101_goals')) || [],
+        rewards: JSON.parse(localStorage.getItem('lg_v101_rewards')) || [],
+        history: JSON.parse(localStorage.getItem('lg_v101_history')) || [],
+        tasks: JSON.parse(localStorage.getItem('lg_v101_tasks')) || []
+    };
+
+    if(state.rewards.length === 0) {
+        state.rewards.push({id: 1, text: "静默休息 (15min)", cost: 50});
+    }
+
+    function save() {
+        localStorage.setItem('lg_v101_score', state.score);
+        localStorage.setItem('lg_v101_goals', JSON.stringify(state.goals));
+        localStorage.setItem('lg_v101_rewards', JSON.stringify(state.rewards));
+        localStorage.setItem('lg_v101_history', JSON.stringify(state.history));
+        localStorage.setItem('lg_v101_tasks', JSON.stringify(state.tasks));
+        render();
+    }
+
+    function autoSetVal() {
+        const tag = document.getElementById('tTag').value;
+        const valInput = document.getElementById('tVal');
+        if (tag === 'daily_important') valInput.value = 10;
+        else if (tag === 'daily_trivial') valInput.value = 5;
+        else valInput.value = 10; 
+    }
+
+    function addGoal() {
+        const val = document.getElementById('vInput').value.trim();
+        if(!val) return;
+        state.goals.push({ id: 'g'+Date.now(), name: val, progress: 0 });
+        document.getElementById('vInput').value = ''; save();
+    }
+
+    function deleteGoal(id) {
+        if(confirm("确认抹除此愿景？")) {
+            state.goals = state.goals.filter(x => x.id !== id);
+            save();
+        }
+    }
+
+    function addTask() {
+        const text = document.getElementById('tInput').value.trim();
+        if(!text) return;
+        
+        state.tasks.push({
+            id: Date.now(),
+            text: text,
+            tag: document.getElementById('tTag').value,
+            priority: parseFloat(document.getElementById('tPriority').value),
+            target: parseInt(document.getElementById('tQty').value) || 1,
+            current: 0,
+            val: parseInt(document.getElementById('tVal').value) || 10
+        });
+        
+        document.getElementById('tInput').value = '';
+        document.getElementById('tQty').value = 1;
+        autoSetVal();
+        save();
+    }
+
+    function editTaskText(id) {
+        const t = state.tasks.find(x => x.id === id);
+        const newText = prompt("修正行动名称:", t.text);
+        if(newText) { t.text = newText; save(); }
+    }
+
+    function editTaskTarget(id) {
+        const t = state.tasks.find(x => x.id === id);
+        const newTarget = prompt("修正目标次数:", t.target);
+        if(newTarget && !isNaN(newTarget) && parseInt(newTarget) > t.current) {
+            t.target = parseInt(newTarget);
+            save();
+        }
+    }
+
+    function doTask(id) {
+        const t = state.tasks.find(x => x.id === id);
+        t.current++;
+        const impact = t.val * t.priority;
+        state.score += Math.floor(impact);
+
+        if(t.tag.startsWith('g')) {
+            const g = state.goals.find(x => x.id === t.tag);
+            if(g) g.progress += (100 - g.progress) * (1 - Math.exp(-impact * 0.0005));
+        }
+
+        // 存入完整快照以便撤回
+        state.history.push({ 
+            actionType: 'task', 
+            taskId: t.id,
+            text: t.text, 
+            impact: impact, 
+            tag: t.tag, 
+            priority: t.priority,
+            val: t.val,
+            target: t.target,
+            date: new Date().toISOString() 
+        });
+
+        if(t.current >= t.target) state.tasks = state.tasks.filter(x => x.id !== id);
+        save();
+    }
+
+    // 撤回功能
+    function undoLastAction() {
+        const lastLog = state.history.pop();
+        if (!lastLog || lastLog.actionType !== 'task') {
+            alert("无最近可撤回的任务操作");
+            return;
+        }
+
+        // 1. 扣除能量
+        state.score -= Math.floor(lastLog.impact);
+
+        // 2. 回滚愿景进度
+        if (lastLog.tag.startsWith('g')) {
+            const g = state.goals.find(x => x.id === lastLog.tag);
+            if (g) {
+                const factor = 1 - Math.exp(-lastLog.impact * 0.0005);
+                g.progress = (g.progress - 100 * factor) / (1 - factor);
+                if(g.progress < 0) g.progress = 0; 
+            }
+        }
+
+        // 3. 回滚任务状态
+        let t = state.tasks.find(x => x.id === lastLog.taskId);
+        if (t) {
+            if(t.current > 0) t.current--;
+        } else {
+            // 复活任务
+            state.tasks.push({
+                id: lastLog.taskId,
+                text: lastLog.text,
+                tag: lastLog.tag,
+                priority: lastLog.priority,
+                target: lastLog.target,
+                current: lastLog.target - 1,
+                val: lastLog.val
+            });
+        }
+        save();
+        alert(`已撤回：${lastLog.text}`);
+    }
+
+    function addReward() {
+        const n = document.getElementById('rewardInput').value.trim();
+        const c = parseInt(document.getElementById('rewardCost').value) || 0;
+        if(!n) return;
+        state.rewards.push({id: Date.now(), text: n, cost: c});
+        document.getElementById('rewardInput').value = ''; save();
+    }
+
+    function buyReward(id) {
+        const r = state.rewards.find(x => x.id === id);
+        if(state.score >= r.cost) {
+            state.score -= r.cost;
+            save(); alert("已兑换: " + r.text);
+        } else alert("能量不足");
+    }
+
+    function exportData() {
+        const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `LIFEGAME_BACKUP_${new Date().toLocaleDateString()}.json`;
+        a.click();
+    }
+
+    function generateReview(days) {
+        const cutoff = new Date(Date.now() - days * 86400000);
+        const recent = state.history.filter(h => new Date(h.date) > cutoff);
+        document.getElementById('modalBody').innerHTML = `
+            周期: 过去 ${days} 天<br>
+            行动: ${recent.length} 次<br>
+            产出: ${recent.reduce((a,b)=>a+(b.impact||0),0).toFixed(0)} Pts<br>
+            愿景推进: ${recent.filter(h=>h.tag && h.tag.startsWith('g')).length} 次
+        `;
+        document.getElementById('reviewModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('reviewModal').style.display = 'none'; }
+
+    function render() {
+        const tagSelect = document.getElementById('tTag');
+        const currentSelection = tagSelect.value; 
+
+        let optionsHtml = `
+            <option value="daily_important">◆ 每日正事 (10pts)</option>
+            <option value="daily_trivial">◇ 日常琐事 (5pts)</option>
+        `;
+        optionsHtml += state.goals.map(g => `<option value="${g.id}">◎ 愿景: ${g.name}</option>`).join('');
+        tagSelect.innerHTML = optionsHtml;
+
+        if (currentSelection && Array.from(tagSelect.options).some(o => o.value === currentSelection)) {
+            tagSelect.value = currentSelection;
+        } else {
+            tagSelect.value = "daily_important";
+        }
+
+        document.getElementById('goalContainer').innerHTML = state.goals.map(g => `
+            <div style="margin-bottom:25px;">
+                <div class="flex-row" style="justify-content:space-between; margin-bottom:8px;">
+                    <span class="highlight-text" style="font-family: 'Times New Roman'; letter-spacing:1px;">${g.name}</span>
+                    <span class="del-x" onclick="deleteGoal('${g.id}')">×</span>
+                </div>
+                <div class="flex-row" style="justify-content:space-between; align-items:flex-end;">
+                    <div class="progress-container" style="margin:0; width:82%"><div class="progress-fill" style="width:${g.progress}%"></div></div>
+                    <div style="font-size:13px; font-family:'Times New Roman'; color:var(--text);">${g.progress.toFixed(4)}%</div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('tList').innerHTML = state.tasks.map(t => `
+            <div class="task-row">
+                <div class="task-left">
+                    <div class="editable highlight-text" onclick="editTaskText(${t.id})" title="点击修改名称">${t.text}</div>
+                    <div class="dim" style="margin-top:8px; color: #666;">
+                        ${t.tag==='daily_important'?'◆ 正事':t.tag==='daily_trivial'?'◇ 琐事':'◎ 愿景'} 
+                        | Val: ${t.val * t.priority}
+                    </div>
+                </div>
+                <div class="counter-btn" onclick="doTask(${t.id})" title="点击完成一次">
+                    <span style="font-weight:bold; font-size:16px;">${t.current}</span>
+                    <span style="color:#999">/</span>
+                    <span class="editable" onclick="event.stopPropagation(); editTaskTarget(${t.id})" title="修改次数">${t.target}</span>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('rewardContainer').innerHTML = state.rewards.map(r => `
+            <div class="shop-item">
+                <div class="del-x" onclick="state.rewards=state.rewards.filter(x=>x.id!==${r.id});save()">×</div>
+                <div class="highlight-text" style="margin-bottom:15px; line-height:1.4;">${r.text}</div>
+                <button class="btn btn-sm" style="margin-top:auto;" onclick="buyReward(${r.id})">${r.cost} Pts</button>
+            </div>
+        `).join('');
+
+        const avg = state.goals.length ? state.goals.reduce((a,b)=>a+b.progress,0)/state.goals.length : 0;
+        document.getElementById('lifeBar').style.width = avg + '%';
+        document.getElementById('lifeScore').innerText = avg.toFixed(4) + '%';
+        document.getElementById('dailyScore').innerText = state.score;
+    }
+    
+    render();
+    autoSetVal();
+</script>
+</body>
+</html>
