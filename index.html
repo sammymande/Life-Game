@@ -2,19 +2,20 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeGame V10.2 | 极致黑白版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LifeGame V10.4 | 拟态拖拽版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --bg: #FFFFFF;       /* 纯白背景 */
             --text: #000000;     /* 核心文字：纯黑 */
-            --dim: #555555;      /* 辅助文字：深灰 */
+            --dim: #888888;      /* 辅助文字：中灰 */
             --border: #E0E0E0;   /* 边框：浅灰 */
             --accent: #000000;   /* 强调色：纯黑 */
             --danger: #D32F2F;   /* 警示红 */
         }
         
-        * { box-sizing: border-box; transition: all 0.2s ease; }
+        * { box-sizing: border-box; } /* 移除全局 transition 以避免干扰拖拽动画 */
         
         body {
             background-color: var(--bg); 
@@ -24,6 +25,8 @@
             min-height: 100vh; margin: 0; padding: 20px;
             font-size: 15px; 
             letter-spacing: 0.05em;
+            /* 防止手机端下拉刷新干扰拖拽 */
+            overscroll-behavior-y: none;
         }
 
         .app-container { width: 100%; max-width: 460px; }
@@ -39,7 +42,7 @@
             background: #F0F0F0; height: 3px; width: 100%; margin: 15px 0; 
         }
         .progress-fill { 
-            height: 100%; background: var(--text); width: 0%; 
+            height: 100%; background: var(--text); width: 0%; transition: width 0.3s ease;
         }
 
         .score-box { 
@@ -59,29 +62,15 @@
             font-weight: normal;
             border-left: 3px solid var(--text); 
             padding-left: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* 核心修改：撤回按钮 - 黑底白字 */
         .undo-btn {
-            font-size: 12px;
-            color: #FFFFFF;       /* 白字 */
-            background: #000000;  /* 黑底 */
-            cursor: pointer;
-            border: 1px solid #000000;
-            padding: 4px 10px;
-            border-radius: 0;     /* 直角，符合印刷风 */
-            font-family: sans-serif;
-            font-weight: normal;
-            opacity: 1;
+            font-size: 12px; color: #FFFFFF; background: #000000; cursor: pointer;
+            border: 1px solid #000000; padding: 4px 10px; border-radius: 0;
+            font-family: sans-serif; font-weight: normal;
         }
-        .undo-btn:hover { 
-            background: #333333; /* 悬停深灰 */
-            border-color: #333333;
-        }
-        .undo-btn:active { transform: scale(0.95); }
+        .undo-btn:active { opacity: 0.7; }
 
         input, select { 
             background: transparent; border: none; border-bottom: 1px solid #CCC; 
@@ -101,22 +90,61 @@
 
         .section { margin-bottom: 50px; }
 
+        /* --- 任务卡片核心升级 --- */
         .task-row {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 18px 0; border-bottom: 1px solid #F0F0F0;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 10px; 
+            border-bottom: 1px solid #F0F0F0;
+            background: #FFF;
+            position: relative;
         }
-        .task-left { flex: 1; padding-right: 15px; }
         
+        /* 拖拽时的幽灵样式 (SortableJS 自动添加) */
+        .sortable-ghost {
+            background-color: #F8F8F8;
+            opacity: 0.5;
+            border: 1px dashed #999;
+        }
+        .sortable-drag {
+            background-color: #FFFFFF;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transform: scale(1.02);
+        }
+
+        .task-content-wrapper {
+            flex: 1; /* 占据中间空间 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 15px;
+        }
+
+        .task-left { flex: 1; padding-right: 10px; }
+        
+        /* 拖拽手柄样式 - 仿苹果提醒事项 */
+        .drag-handle {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            color: #DDD; /* 默认浅灰，极简 */
+            font-size: 20px;
+            margin-left: 5px;
+            touch-action: none; /* 关键：防止触摸滚动干扰拖拽 */
+        }
+        .drag-handle:active { cursor: grabbing; color: #000; }
+
         .highlight-text { color: var(--text); font-size: 16px; font-weight: bold; }
         .editable { cursor: pointer; border-bottom: 1px dashed #999; padding-bottom: 2px; }
         .editable:hover { border-bottom: 1px solid #000; }
 
         .counter-btn {
             border: 1px solid #CCC; color: var(--text); background: #FFF;
-            padding: 6px 12px; cursor: pointer; min-width: 70px; text-align: center; 
+            padding: 6px 12px; cursor: pointer; min-width: 65px; text-align: center; 
             font-size: 14px; font-family: 'Times New Roman', serif; user-select: none;
         }
-        .counter-btn:hover { border-color: #000; background: #F9F9F9; }
         .counter-btn:active { background: #000; color: #FFF; }
 
         .shop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -124,7 +152,6 @@
             border: 1px solid #EEE; padding: 15px; position: relative; 
             display: flex; flex-direction: column; justify-content: space-between; min-height: 90px;
         }
-        .shop-item:hover { border-color: #999; }
         .del-x { position: absolute; top: 0; right: 0; padding: 10px; cursor: pointer; font-size: 14px; color: #999; }
         .del-x:hover { color: var(--danger); }
 
@@ -166,28 +193,18 @@
         
         <div style="border: 1px solid #EEE; padding: 20px; margin-bottom: 20px; background: #FAFAFA;">
             <input type="text" id="tInput" placeholder="输入具体行动..." style="font-size: 16px; margin-bottom: 15px;">
-            
             <div class="flex-row" style="margin-bottom: 15px;">
-                <select id="tTag" onchange="autoSetVal()">
-                    </select>
+                <select id="tTag" onchange="autoSetVal()"></select>
                 <select id="tPriority" style="width: 100px;">
                     <option value="1">普通权重</option>
                     <option value="1.5">重点权重</option>
                     <option value="2">核心权重</option>
                 </select>
             </div>
-            
             <div class="flex-row">
-                <div style="flex:1">
-                    <label class="dim">Quantity / 次数</label>
-                    <input type="number" id="tQty" value="1" style="font-family: 'Times New Roman';">
-                </div>
-                <div style="flex:1">
-                    <label class="dim">Value / 分值</label>
-                    <input type="number" id="tVal" value="10" style="font-family: 'Times New Roman';">
-                </div>
+                <div style="flex:1"><label class="dim">Quantity / 次数</label><input type="number" id="tQty" value="1" style="font-family: 'Times New Roman';"></div>
+                <div style="flex:1"><label class="dim">Value / 分值</label><input type="number" id="tVal" value="10" style="font-family: 'Times New Roman';"></div>
             </div>
-            
             <button class="btn" onclick="addTask()">发布行动</button>
         </div>
         
@@ -213,7 +230,7 @@
     </div>
 
     <div class="dim" style="text-align: center; margin-top: 60px; opacity: 0.4;">
-        LIFEGAME v10.2 / UNDO ENABLED
+        LIFEGAME v10.4 / DRAG & DROP
     </div>
 </div>
 
@@ -234,9 +251,7 @@
         tasks: JSON.parse(localStorage.getItem('lg_v101_tasks')) || []
     };
 
-    if(state.rewards.length === 0) {
-        state.rewards.push({id: 1, text: "静默休息 (15min)", cost: 50});
-    }
+    if(state.rewards.length === 0) state.rewards.push({id: 1, text: "静默休息 (15min)", cost: 50});
 
     function save() {
         localStorage.setItem('lg_v101_score', state.score);
@@ -246,6 +261,25 @@
         localStorage.setItem('lg_v101_tasks', JSON.stringify(state.tasks));
         render();
     }
+
+    /* --- 初始化 SortableJS 拖拽 --- */
+    document.addEventListener("DOMContentLoaded", () => {
+        const list = document.getElementById('tList');
+        Sortable.create(list, {
+            handle: '.drag-handle', // 只有点这个把手才能拖
+            animation: 150,         // 动画速度 ms
+            ghostClass: 'sortable-ghost', // 拖动时的占位类名
+            dragClass: 'sortable-drag',   // 拖动时的元素类名
+            delay: 0, 
+            touchStartThreshold: 0, // 提升触摸响应
+            onEnd: function (evt) {
+                // 数据重排
+                const item = state.tasks.splice(evt.oldIndex, 1)[0];
+                state.tasks.splice(evt.newIndex, 0, item);
+                save(); // 保存新顺序
+            },
+        });
+    });
 
     function autoSetVal() {
         const tag = document.getElementById('tTag').value;
@@ -272,17 +306,12 @@
     function addTask() {
         const text = document.getElementById('tInput').value.trim();
         if(!text) return;
-        
         state.tasks.push({
-            id: Date.now(),
-            text: text,
-            tag: document.getElementById('tTag').value,
+            id: Date.now(), text: text, tag: document.getElementById('tTag').value,
             priority: parseFloat(document.getElementById('tPriority').value),
             target: parseInt(document.getElementById('tQty').value) || 1,
-            current: 0,
-            val: parseInt(document.getElementById('tVal').value) || 10
+            current: 0, val: parseInt(document.getElementById('tVal').value) || 10
         });
-        
         document.getElementById('tInput').value = '';
         document.getElementById('tQty').value = 1;
         autoSetVal();
@@ -315,35 +344,19 @@
             if(g) g.progress += (100 - g.progress) * (1 - Math.exp(-impact * 0.0005));
         }
 
-        // 存入完整快照以便撤回
         state.history.push({ 
-            actionType: 'task', 
-            taskId: t.id,
-            text: t.text, 
-            impact: impact, 
-            tag: t.tag, 
-            priority: t.priority,
-            val: t.val,
-            target: t.target,
-            date: new Date().toISOString() 
+            actionType: 'task', taskId: t.id, text: t.text, impact: impact, 
+            tag: t.tag, priority: t.priority, val: t.val, target: t.target, date: new Date().toISOString() 
         });
 
         if(t.current >= t.target) state.tasks = state.tasks.filter(x => x.id !== id);
         save();
     }
 
-    // 撤回功能
     function undoLastAction() {
         const lastLog = state.history.pop();
-        if (!lastLog || lastLog.actionType !== 'task') {
-            alert("无最近可撤回的任务操作");
-            return;
-        }
-
-        // 1. 扣除能量
+        if (!lastLog || lastLog.actionType !== 'task') { alert("无最近可撤回的任务操作"); return; }
         state.score -= Math.floor(lastLog.impact);
-
-        // 2. 回滚愿景进度
         if (lastLog.tag.startsWith('g')) {
             const g = state.goals.find(x => x.id === lastLog.tag);
             if (g) {
@@ -352,21 +365,13 @@
                 if(g.progress < 0) g.progress = 0; 
             }
         }
-
-        // 3. 回滚任务状态
         let t = state.tasks.find(x => x.id === lastLog.taskId);
-        if (t) {
-            if(t.current > 0) t.current--;
-        } else {
-            // 复活任务
+        if (t) { if(t.current > 0) t.current--; }
+        else {
             state.tasks.push({
-                id: lastLog.taskId,
-                text: lastLog.text,
-                tag: lastLog.tag,
-                priority: lastLog.priority,
-                target: lastLog.target,
-                current: lastLog.target - 1,
-                val: lastLog.val
+                id: lastLog.taskId, text: lastLog.text, tag: lastLog.tag,
+                priority: lastLog.priority, target: lastLog.target,
+                current: lastLog.target - 1, val: lastLog.val
             });
         }
         save();
@@ -441,20 +446,24 @@
             </div>
         `).join('');
 
+        // 任务列表渲染
         document.getElementById('tList').innerHTML = state.tasks.map(t => `
             <div class="task-row">
-                <div class="task-left">
-                    <div class="editable highlight-text" onclick="editTaskText(${t.id})" title="点击修改名称">${t.text}</div>
-                    <div class="dim" style="margin-top:8px; color: #666;">
-                        ${t.tag==='daily_important'?'◆ 正事':t.tag==='daily_trivial'?'◇ 琐事':'◎ 愿景'} 
-                        | Val: ${t.val * t.priority}
+                <div class="task-content-wrapper">
+                    <div class="task-left">
+                        <div class="editable highlight-text" onclick="editTaskText(${t.id})" title="点击修改名称">${t.text}</div>
+                        <div class="dim" style="margin-top:8px; color: #666;">
+                            ${t.tag==='daily_important'?'◆ 正事':t.tag==='daily_trivial'?'◇ 琐事':'◎ 愿景'} 
+                            | Val: ${t.val * t.priority}
+                        </div>
+                    </div>
+                    <div class="counter-btn" onclick="doTask(${t.id})" title="点击完成一次">
+                        <span style="font-weight:bold; font-size:16px;">${t.current}</span>
+                        <span style="color:#999">/</span>
+                        <span class="editable" onclick="event.stopPropagation(); editTaskTarget(${t.id})" title="修改次数">${t.target}</span>
                     </div>
                 </div>
-                <div class="counter-btn" onclick="doTask(${t.id})" title="点击完成一次">
-                    <span style="font-weight:bold; font-size:16px;">${t.current}</span>
-                    <span style="color:#999">/</span>
-                    <span class="editable" onclick="event.stopPropagation(); editTaskTarget(${t.id})" title="修改次数">${t.target}</span>
-                </div>
+                <div class="drag-handle">≡</div>
             </div>
         `).join('');
 
