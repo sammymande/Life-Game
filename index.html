@@ -3,139 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LifeGame V10.6 | 全域控制版</title>
+    <title>LifeGame V10.7 | 永恒数据版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
-            --bg: #FFFFFF;       /* 纯白 */
-            --text: #000000;     /* 纯黑 */
-            --dim: #888888;      /* 中灰 */
-            --border: #E0E0E0;   /* 浅灰 */
-            --accent: #000000;   
-            --danger: #D32F2F;   /* 警示红 */
+            --bg: #FFFFFF; --text: #000000; --dim: #888888; 
+            --border: #E0E0E0; --accent: #000000; --danger: #D32F2F;
         }
-        
         * { box-sizing: border-box; } 
-        
         body {
-            background-color: var(--bg); 
-            color: var(--text);
+            background-color: var(--bg); color: var(--text);
             font-family: "Songti SC", "Noto Serif SC", "SimSun", "STSong", serif;
             display: flex; justify-content: center; 
             min-height: 100vh; margin: 0; padding: 20px;
-            font-size: 15px; 
-            letter-spacing: 0.05em;
+            font-size: 15px; letter-spacing: 0.05em;
             overscroll-behavior-y: none;
         }
-
         .app-container { width: 100%; max-width: 460px; }
 
-        /* --- 仪表盘 --- */
-        .dashboard-card {
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 30px; margin-bottom: 40px;
-        }
-        .progress-container { 
-            background: #F0F0F0; height: 3px; width: 100%; margin: 15px 0; 
-        }
-        .progress-fill { 
-            height: 100%; background: var(--text); width: 0%; transition: width 0.3s ease;
-        }
-        .score-box { 
-            font-size: 2.8rem; font-family: 'Times New Roman', serif; 
-            margin: 5px 0; display: block; color: var(--text); font-weight: bold;
-        }
+        /* 组件样式 */
+        .dashboard-card { border-bottom: 1px solid var(--border); padding-bottom: 30px; margin-bottom: 40px; }
+        .progress-container { background: #F0F0F0; height: 3px; width: 100%; margin: 15px 0; }
+        .progress-fill { height: 100%; background: var(--text); width: 0%; transition: width 0.3s ease; }
+        .score-box { font-size: 2.8rem; font-family: 'Times New Roman', serif; margin: 5px 0; display: block; font-weight: bold; }
 
-        /* --- 标题与撤回 --- */
-        h2 { 
-            font-size: 14px; color: var(--dim); margin-bottom: 20px; 
-            font-weight: normal; border-left: 3px solid var(--text); 
-            padding-left: 12px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .undo-btn {
-            font-size: 12px; color: #FFFFFF; background: #000000; cursor: pointer;
-            border: 1px solid #000000; padding: 4px 10px; border-radius: 0;
-            font-family: sans-serif; font-weight: normal;
-        }
+        h2 { font-size: 14px; color: var(--dim); margin-bottom: 20px; font-weight: normal; border-left: 3px solid var(--text); padding-left: 12px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .undo-btn { font-size: 12px; color: #FFF; background: #000; cursor: pointer; border: 1px solid #000; padding: 4px 10px; border-radius: 0; font-family: sans-serif; }
         .undo-btn:active { opacity: 0.7; }
 
-        /* --- 输入与按钮 --- */
-        input, select { 
-            background: transparent; border: none; border-bottom: 1px solid #CCC; 
-            color: var(--text); padding: 10px 5px; font-family: inherit; font-size: 15px; 
-            width: 100%; border-radius: 0;
-        }
+        input, select { background: transparent; border: none; border-bottom: 1px solid #CCC; color: var(--text); padding: 10px 5px; font-family: inherit; font-size: 15px; width: 100%; border-radius: 0; }
         input:focus, select:focus { border-bottom: 1px solid var(--accent); outline: none; }
         input::placeholder { color: #999; font-style: italic; }
 
-        .btn { 
-            border: 1px solid var(--text); background: transparent; color: var(--text);
-            padding: 12px 0; cursor: pointer; font-family: inherit; font-size: 14px; 
-            width: 100%; margin-top: 15px; font-weight: bold; 
-        }
+        .btn { border: 1px solid var(--text); background: transparent; color: var(--text); padding: 12px 0; cursor: pointer; font-family: inherit; font-size: 14px; width: 100%; margin-top: 15px; font-weight: bold; }
         .btn:hover { background: var(--text); color: var(--bg); }
-        .btn-sm { width: auto; padding: 5px 20px; margin-top: 0; font-size: 12px;}
+        .btn-sm { width: auto; padding: 5px 20px; margin-top: 0; font-size: 12px; }
 
         .section { margin-bottom: 50px; }
 
-        /* --- 任务卡片 --- */
-        .task-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 10px; border-bottom: 1px solid #F0F0F0; background: #FFF;
-            position: relative;
-        }
+        /* 任务卡片 */
+        .task-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 10px; border-bottom: 1px solid #F0F0F0; background: #FFF; position: relative; }
         .sortable-ghost { background-color: #F8F8F8; opacity: 0.5; border: 1px dashed #999; }
         .sortable-drag { background-color: #FFFFFF; box-shadow: 0 10px 20px rgba(0,0,0,0.15); transform: scale(1.02); }
-
-        .task-content-wrapper {
-            flex: 1; display: flex; justify-content: space-between;
-            align-items: center; padding-right: 10px;
-        }
+        .task-content-wrapper { flex: 1; display: flex; justify-content: space-between; align-items: center; padding-right: 10px; }
         .task-left { flex: 1; padding-right: 10px; }
-        
-        /* 拖拽手柄 */
-        .drag-handle {
-            width: 24px; height: 30px; display: flex; align-items: center; justify-content: center;
-            cursor: grab; color: #DDD; font-size: 18px; margin-left: 5px; touch-action: none;
-        }
-        .drag-handle:active { cursor: grabbing; color: #000; }
-
-        /* 删除按钮 (新增) */
-        .task-del-btn {
-            color: #DDD; cursor: pointer; font-size: 18px; padding: 0 5px; margin-left: 5px;
-        }
+        .drag-handle { width: 24px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: grab; color: #DDD; font-size: 18px; margin-left: 5px; touch-action: none; }
+        .task-del-btn { color: #DDD; cursor: pointer; font-size: 18px; padding: 0 5px; margin-left: 5px; }
         .task-del-btn:hover { color: var(--danger); }
-
-        .highlight-text { color: var(--text); font-size: 16px; font-weight: bold; }
+        
+        .highlight-text { font-weight: bold; }
         .editable { cursor: pointer; border-bottom: 1px dashed #999; padding-bottom: 1px; }
-        .editable:hover { border-bottom: 1px solid #000; color: #000; }
+        .editable:hover { border-bottom: 1px solid #000; }
 
-        .counter-btn {
-            border: 1px solid #CCC; color: var(--text); background: #FFF;
-            padding: 6px 12px; cursor: pointer; min-width: 65px; text-align: center; 
-            font-size: 14px; font-family: 'Times New Roman', serif; user-select: none;
-        }
+        .counter-btn { border: 1px solid #CCC; color: var(--text); background: #FFF; padding: 6px 12px; cursor: pointer; min-width: 65px; text-align: center; font-size: 14px; font-family: 'Times New Roman', serif; user-select: none; }
         .counter-btn:active { background: #000; color: #FFF; }
 
-        /* --- 商店与模态 --- */
-        .shop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .shop-item { 
-            border: 1px solid #EEE; padding: 15px; position: relative; 
-            display: flex; flex-direction: column; justify-content: space-between; min-height: 90px;
-        }
+        .shop-item { border: 1px solid #EEE; padding: 15px; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 90px; }
         .del-x { position: absolute; top: 0; right: 0; padding: 10px; cursor: pointer; font-size: 14px; color: #999; }
-        .del-x:hover { color: var(--danger); }
+        .shop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
         .modal-content { border: 1px solid var(--text); background: #FFF; padding: 40px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-
+        
         .select-modal-list { list-style: none; padding: 0; margin: 0; text-align: left; max-height: 300px; overflow-y: auto; }
         .select-modal-item { padding: 12px; border-bottom: 1px solid #EEE; cursor: pointer; font-size: 14px; }
         .select-modal-item:hover { background: #F5F5F5; }
         .select-modal-item.active { font-weight: bold; background: #F0F0F0; }
 
         .flex-row { display: flex; gap: 15px; align-items: flex-end; }
-        .dim { color: var(--dim); font-size: 12px; font-family: 'Times New Roman', serif;}
+        .dim { color: var(--dim); font-size: 12px; font-family: 'Times New Roman', serif; }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
@@ -148,7 +85,7 @@
         <div class="progress-container"><div class="progress-fill" id="lifeBar"></div></div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
             <div class="dim">Reserve / 秩序能量</div>
-            <div style="font-size: 2rem; font-family: 'Times New Roman'; color: var(--text); font-weight: bold;" id="dailyScore">0</div>
+            <div style="font-size: 2rem; font-family: 'Times New Roman'; font-weight: bold;" id="dailyScore">0</div>
         </div>
     </div>
 
@@ -166,7 +103,6 @@
             02 . 行动清单
             <span class="undo-btn" onclick="undoLastAction()" title="撤回上一次完成操作">↺ 撤回</span>
         </h2>
-        
         <div style="border: 1px solid #EEE; padding: 20px; margin-bottom: 20px; background: #FAFAFA;">
             <input type="text" id="tInput" placeholder="输入具体行动..." style="font-size: 16px; margin-bottom: 15px;">
             <div class="flex-row" style="margin-bottom: 15px;">
@@ -183,7 +119,6 @@
             </div>
             <button class="btn" onclick="addTask()">发布行动</button>
         </div>
-        
         <div id="tList" style="border-top: 2px solid #EEE;"></div>
     </div>
 
@@ -202,18 +137,20 @@
         <div class="flex-row">
             <button class="btn" onclick="generateReview(7)">周度复盘</button>
             <button class="btn" onclick="exportData()">备份存档</button>
+            <button class="btn" onclick="document.getElementById('importFile').click()" style="border-style:dashed;">导入存档</button>
+            <input type="file" id="importFile" hidden onchange="importData(this)">
         </div>
     </div>
 
     <div class="dim" style="text-align: center; margin-top: 60px; opacity: 0.4;">
-        LIFEGAME v10.6 / TOTAL CONTROL
+        LIFEGAME v10.7 / DATA SAFE
     </div>
 </div>
 
 <div id="reviewModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0; border:none; text-align: center; color: var(--text);">档案快照</h2>
-        <div id="modalBody" style="line-height: 2.2; font-size: 15px; margin-bottom: 30px; font-family: 'Times New Roman'; color: #333;"></div>
+        <h2 style="margin-top:0; border:none; text-align: center;">档案快照</h2>
+        <div id="modalBody" style="line-height: 2.2; font-size: 15px; margin-bottom: 30px; font-family: 'Times New Roman';"></div>
         <button class="btn" onclick="document.getElementById('reviewModal').style.display='none'">关闭档案</button>
     </div>
 </div>
@@ -227,28 +164,48 @@
 </div>
 
 <script>
+    // --- 数据持久化核心 ---
+    // 为了保证向下兼容，我们锁定使用 lg_v101_ 开头的键名
+    // 即使未来更新到 V11, V12，这些键名也不应该变
+    const KEYS = {
+        SCORE: 'lg_v101_score',
+        GOALS: 'lg_v101_goals',
+        REWARDS: 'lg_v101_rewards',
+        HISTORY: 'lg_v101_history',
+        TASKS: 'lg_v101_tasks'
+    };
+
+    // 状态初始化：带空值保护
     const state = {
-        score: parseInt(localStorage.getItem('lg_v101_score')) || 0,
-        goals: JSON.parse(localStorage.getItem('lg_v101_goals')) || [],
-        rewards: JSON.parse(localStorage.getItem('lg_v101_rewards')) || [],
-        history: JSON.parse(localStorage.getItem('lg_v101_history')) || [],
-        tasks: JSON.parse(localStorage.getItem('lg_v101_tasks')) || []
+        score: parseInt(localStorage.getItem(KEYS.SCORE)) || 0,
+        goals: safeParse(localStorage.getItem(KEYS.GOALS), []),
+        rewards: safeParse(localStorage.getItem(KEYS.REWARDS), []),
+        history: safeParse(localStorage.getItem(KEYS.HISTORY), []),
+        tasks: safeParse(localStorage.getItem(KEYS.TASKS), [])
     };
 
     let currentEditingTaskId = null;
 
+    // 安全解析 JSON，防止崩溃
+    function safeParse(str, fallback) {
+        try { return JSON.parse(str) || fallback; } 
+        catch (e) { return fallback; }
+    }
+
+    // 默认奖励数据
     if(state.rewards.length === 0) state.rewards.push({id: 1, text: "静默休息 (15min)", cost: 50});
 
+    // 核心保存函数
     function save() {
-        localStorage.setItem('lg_v101_score', state.score);
-        localStorage.setItem('lg_v101_goals', JSON.stringify(state.goals));
-        localStorage.setItem('lg_v101_rewards', JSON.stringify(state.rewards));
-        localStorage.setItem('lg_v101_history', JSON.stringify(state.history));
-        localStorage.setItem('lg_v101_tasks', JSON.stringify(state.tasks));
+        localStorage.setItem(KEYS.SCORE, state.score);
+        localStorage.setItem(KEYS.GOALS, JSON.stringify(state.goals));
+        localStorage.setItem(KEYS.REWARDS, JSON.stringify(state.rewards));
+        localStorage.setItem(KEYS.HISTORY, JSON.stringify(state.history));
+        localStorage.setItem(KEYS.TASKS, JSON.stringify(state.tasks));
         render();
     }
 
-    /* --- 拖拽初始化 --- */
+    // --- 拖拽初始化 ---
     document.addEventListener("DOMContentLoaded", () => {
         const list = document.getElementById('tList');
         Sortable.create(list, {
@@ -259,7 +216,25 @@
                 save();
             },
         });
+        
+        // 自动数据迁移检查
+        migrateData();
     });
+
+    // --- 数据迁移/修复逻辑 ---
+    // 每次加载时运行，确保旧数据适应新版本
+    function migrateData() {
+        let changed = false;
+        state.tasks.forEach(t => {
+            // 如果旧任务没有 val 字段，补上默认值
+            if (t.val === undefined) { t.val = 10; changed = true; }
+            // 如果旧任务没有 target 字段
+            if (t.target === undefined) { t.target = 1; changed = true; }
+        });
+        if (changed) save();
+    }
+
+    // --- 业务逻辑 ---
 
     function autoSetVal() {
         const tag = document.getElementById('tTag').value;
@@ -269,7 +244,6 @@
         else valInput.value = 10; 
     }
 
-    /* --- 愿景管理 --- */
     function addGoal() {
         const val = document.getElementById('vInput').value.trim();
         if(!val) return;
@@ -277,18 +251,16 @@
         document.getElementById('vInput').value = ''; save();
     }
 
-    // 愿景改名
     function editGoalName(id) {
         const g = state.goals.find(x => x.id === id);
         const newName = prompt("修改愿景名称:", g.name);
         if(newName) { g.name = newName; save(); }
     }
 
-    // 愿景删除 (自动重算总进度)
     function deleteGoal(id) {
-        if(confirm("确认抹除此愿景？(对应的理想进度将重新计算)")) {
+        if(confirm("确认抹除此愿景？(进度将重算)")) {
             state.goals = state.goals.filter(x => x.id !== id);
-            save(); // render() 中会自动计算新的 avg 进度，实现了 roll back 效果
+            save();
         }
     }
 
@@ -307,28 +279,33 @@
         save();
     }
 
-    /* --- 任务编辑逻辑 --- */
+    // 任务修改系列
     function editTaskText(id) {
         const t = state.tasks.find(x => x.id === id);
         const newText = prompt("修正行动名称:", t.text);
         if(newText) { t.text = newText; save(); }
     }
-
     function editTaskTarget(id) {
         const t = state.tasks.find(x => x.id === id);
         const newTarget = prompt("修正目标次数:", t.target);
         if(newTarget && !isNaN(newTarget) && parseInt(newTarget) > t.current) {
-            t.target = parseInt(newTarget);
-            save();
+            t.target = parseInt(newTarget); save();
         }
     }
-
     function editTaskVal(id) {
         const t = state.tasks.find(x => x.id === id);
         const newVal = prompt("修正单次分值:", t.val);
         if(newVal && !isNaN(newVal)) { t.val = parseInt(newVal); save(); }
     }
+    
+    function deleteTask(id) {
+        if(confirm("确定移除此任务？")) {
+            state.tasks = state.tasks.filter(x => x.id !== id);
+            save();
+        }
+    }
 
+    // 类别修改弹窗
     function openTagSelectModal(id) {
         currentEditingTaskId = id;
         const t = state.tasks.find(x => x.id === id);
@@ -355,14 +332,6 @@
         if (t) { t.tag = newTag; save(); }
         document.getElementById('tagSelectModal').style.display = 'none';
         currentEditingTaskId = null;
-    }
-
-    // 任务直接删除 (不影响分数)
-    function deleteTask(id) {
-        if(confirm("确定移除此任务？(不会扣除已获得的分数)")) {
-            state.tasks = state.tasks.filter(x => x.id !== id);
-            save();
-        }
     }
 
     function doTask(id) {
@@ -426,12 +395,55 @@
         } else alert("能量不足");
     }
 
+    // --- 核心：数据导入导出 ---
+    
+    // 导出：打包所有数据为一个 JSON
     function exportData() {
-        const blob = new Blob([JSON.stringify(state)], {type: 'application/json'});
+        const exportObj = {
+            score: state.score,
+            goals: state.goals,
+            rewards: state.rewards,
+            history: state.history,
+            tasks: state.tasks,
+            version: "v10.7"
+        };
+        const blob = new Blob([JSON.stringify(exportObj)], {type: 'application/json'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `LIFEGAME_BACKUP_${new Date().toLocaleDateString()}.json`;
+        a.download = `LIFEGAME_SAVE_${new Date().toISOString().slice(0,10)}.json`;
         a.click();
+    }
+
+    // 导入：读取 JSON 并覆盖当前 State
+    function importData(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                // 简单的校验
+                if (data.score === undefined || !Array.isArray(data.goals)) {
+                    throw new Error("存档格式错误");
+                }
+                
+                if(confirm("警告：导入将覆盖当前所有数据，确定吗？")) {
+                    state.score = data.score || 0;
+                    state.goals = data.goals || [];
+                    state.rewards = data.rewards || [];
+                    state.history = data.history || [];
+                    state.tasks = data.tasks || [];
+                    
+                    save(); // 保存到 LocalStorage
+                    alert("存档导入成功！");
+                }
+            } catch (err) {
+                alert("导入失败：文件损坏或格式不符");
+            }
+            input.value = ''; // 清空输入框以便下次重复导入
+        };
+        reader.readAsText(file);
     }
 
     function generateReview(days) {
@@ -455,6 +467,7 @@
         `;
         optionsHtml += state.goals.map(g => `<option value="${g.id}">◎ 愿景: ${g.name}</option>`).join('');
         tagSelect.innerHTML = optionsHtml;
+        
         if (currentSelection && Array.from(tagSelect.options).some(o => o.value === currentSelection)) {
             tagSelect.value = currentSelection;
         } else {
@@ -464,7 +477,7 @@
         document.getElementById('goalContainer').innerHTML = state.goals.map(g => `
             <div style="margin-bottom:25px;">
                 <div class="flex-row" style="justify-content:space-between; margin-bottom:8px;">
-                    <span class="highlight-text editable" onclick="editGoalName('${g.id}')" title="点击修改名称">${g.name}</span>
+                    <span class="highlight-text editable" onclick="editGoalName('${g.id}')" title="修改愿景名">${g.name}</span>
                     <span class="del-x" onclick="deleteGoal('${g.id}')" title="删除愿景">×</span>
                 </div>
                 <div class="flex-row" style="justify-content:space-between; align-items:flex-end;">
