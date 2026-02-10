@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LifeGame V10.5 | 全域编辑版</title>
+    <title>LifeGame V10.6 | 全域控制版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
-            --bg: #FFFFFF;       /* 纯白背景 */
-            --text: #000000;     /* 核心文字：纯黑 */
-            --dim: #888888;      /* 辅助文字：中灰 */
-            --border: #E0E0E0;   /* 边框：浅灰 */
-            --accent: #000000;   /* 强调色：纯黑 */
+            --bg: #FFFFFF;       /* 纯白 */
+            --text: #000000;     /* 纯黑 */
+            --dim: #888888;      /* 中灰 */
+            --border: #E0E0E0;   /* 浅灰 */
+            --accent: #000000;   
             --danger: #D32F2F;   /* 警示红 */
         }
         
@@ -30,40 +30,28 @@
 
         .app-container { width: 100%; max-width: 460px; }
 
-        /* --- 组件样式 --- */
-        
+        /* --- 仪表盘 --- */
         .dashboard-card {
             border-bottom: 1px solid var(--border);
             padding-bottom: 30px; margin-bottom: 40px;
         }
-        
         .progress-container { 
             background: #F0F0F0; height: 3px; width: 100%; margin: 15px 0; 
         }
         .progress-fill { 
             height: 100%; background: var(--text); width: 0%; transition: width 0.3s ease;
         }
-
         .score-box { 
-            font-size: 2.8rem; 
-            font-family: 'Times New Roman', serif; 
-            margin: 5px 0;
-            display: block;
-            color: var(--text); 
-            font-weight: bold;
+            font-size: 2.8rem; font-family: 'Times New Roman', serif; 
+            margin: 5px 0; display: block; color: var(--text); font-weight: bold;
         }
 
-        /* 标题风格 */
+        /* --- 标题与撤回 --- */
         h2 { 
-            font-size: 14px; 
-            color: var(--dim);
-            margin-bottom: 20px; 
-            font-weight: normal;
-            border-left: 3px solid var(--text); 
-            padding-left: 12px;
-            display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; color: var(--dim); margin-bottom: 20px; 
+            font-weight: normal; border-left: 3px solid var(--text); 
+            padding-left: 12px; display: flex; justify-content: space-between; align-items: center;
         }
-
         .undo-btn {
             font-size: 12px; color: #FFFFFF; background: #000000; cursor: pointer;
             border: 1px solid #000000; padding: 4px 10px; border-radius: 0;
@@ -71,6 +59,7 @@
         }
         .undo-btn:active { opacity: 0.7; }
 
+        /* --- 输入与按钮 --- */
         input, select { 
             background: transparent; border: none; border-bottom: 1px solid #CCC; 
             color: var(--text); padding: 10px 5px; font-family: inherit; font-size: 15px; 
@@ -92,35 +81,32 @@
         /* --- 任务卡片 --- */
         .task-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 10px; 
-            border-bottom: 1px solid #F0F0F0;
-            background: #FFF;
+            padding: 15px 10px; border-bottom: 1px solid #F0F0F0; background: #FFF;
             position: relative;
         }
-        
         .sortable-ghost { background-color: #F8F8F8; opacity: 0.5; border: 1px dashed #999; }
         .sortable-drag { background-color: #FFFFFF; box-shadow: 0 10px 20px rgba(0,0,0,0.15); transform: scale(1.02); }
 
         .task-content-wrapper {
-            flex: 1; 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-right: 15px;
+            flex: 1; display: flex; justify-content: space-between;
+            align-items: center; padding-right: 10px;
         }
-
         .task-left { flex: 1; padding-right: 10px; }
         
         /* 拖拽手柄 */
         .drag-handle {
-            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-            cursor: grab; color: #DDD; font-size: 20px; margin-left: 5px; touch-action: none;
+            width: 24px; height: 30px; display: flex; align-items: center; justify-content: center;
+            cursor: grab; color: #DDD; font-size: 18px; margin-left: 5px; touch-action: none;
         }
         .drag-handle:active { cursor: grabbing; color: #000; }
 
+        /* 删除按钮 (新增) */
+        .task-del-btn {
+            color: #DDD; cursor: pointer; font-size: 18px; padding: 0 5px; margin-left: 5px;
+        }
+        .task-del-btn:hover { color: var(--danger); }
+
         .highlight-text { color: var(--text); font-size: 16px; font-weight: bold; }
-        
-        /* 可编辑区域样式统一 */
         .editable { cursor: pointer; border-bottom: 1px dashed #999; padding-bottom: 1px; }
         .editable:hover { border-bottom: 1px solid #000; color: #000; }
 
@@ -131,6 +117,7 @@
         }
         .counter-btn:active { background: #000; color: #FFF; }
 
+        /* --- 商店与模态 --- */
         .shop-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .shop-item { 
             border: 1px solid #EEE; padding: 15px; position: relative; 
@@ -142,7 +129,6 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
         .modal-content { border: 1px solid var(--text); background: #FFF; padding: 40px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
-        /* 自定义选择框模态 */
         .select-modal-list { list-style: none; padding: 0; margin: 0; text-align: left; max-height: 300px; overflow-y: auto; }
         .select-modal-item { padding: 12px; border-bottom: 1px solid #EEE; cursor: pointer; font-size: 14px; }
         .select-modal-item:hover { background: #F5F5F5; }
@@ -220,7 +206,7 @@
     </div>
 
     <div class="dim" style="text-align: center; margin-top: 60px; opacity: 0.4;">
-        LIFEGAME v10.5 / FULL EDITABLE
+        LIFEGAME v10.6 / TOTAL CONTROL
     </div>
 </div>
 
@@ -249,7 +235,7 @@
         tasks: JSON.parse(localStorage.getItem('lg_v101_tasks')) || []
     };
 
-    let currentEditingTaskId = null; // 用于记录当前正在修改类别的任务ID
+    let currentEditingTaskId = null;
 
     if(state.rewards.length === 0) state.rewards.push({id: 1, text: "静默休息 (15min)", cost: 50});
 
@@ -262,7 +248,7 @@
         render();
     }
 
-    /* --- 初始化 SortableJS 拖拽 --- */
+    /* --- 拖拽初始化 --- */
     document.addEventListener("DOMContentLoaded", () => {
         const list = document.getElementById('tList');
         Sortable.create(list, {
@@ -283,6 +269,7 @@
         else valInput.value = 10; 
     }
 
+    /* --- 愿景管理 --- */
     function addGoal() {
         const val = document.getElementById('vInput').value.trim();
         if(!val) return;
@@ -290,10 +277,18 @@
         document.getElementById('vInput').value = ''; save();
     }
 
+    // 愿景改名
+    function editGoalName(id) {
+        const g = state.goals.find(x => x.id === id);
+        const newName = prompt("修改愿景名称:", g.name);
+        if(newName) { g.name = newName; save(); }
+    }
+
+    // 愿景删除 (自动重算总进度)
     function deleteGoal(id) {
-        if(confirm("确认抹除此愿景？")) {
+        if(confirm("确认抹除此愿景？(对应的理想进度将重新计算)")) {
             state.goals = state.goals.filter(x => x.id !== id);
-            save();
+            save(); // render() 中会自动计算新的 avg 进度，实现了 roll back 效果
         }
     }
 
@@ -312,16 +307,13 @@
         save();
     }
 
-    /* --- 核心修改：全域编辑功能 --- */
-    
-    // 1. 修改任务名称
+    /* --- 任务编辑逻辑 --- */
     function editTaskText(id) {
         const t = state.tasks.find(x => x.id === id);
         const newText = prompt("修正行动名称:", t.text);
         if(newText) { t.text = newText; save(); }
     }
 
-    // 2. 修改目标次数
     function editTaskTarget(id) {
         const t = state.tasks.find(x => x.id === id);
         const newTarget = prompt("修正目标次数:", t.target);
@@ -331,31 +323,22 @@
         }
     }
 
-    // 3. 修改单次分值 (新增)
     function editTaskVal(id) {
         const t = state.tasks.find(x => x.id === id);
-        const newVal = prompt("修正单次分值 (基础分 * 权重):", t.val); // 这里简化逻辑，直接改基础分
-        if(newVal && !isNaN(newVal)) {
-            t.val = parseInt(newVal);
-            save();
-        }
+        const newVal = prompt("修正单次分值:", t.val);
+        if(newVal && !isNaN(newVal)) { t.val = parseInt(newVal); save(); }
     }
 
-    // 4. 修改任务类别 (新增 - 弹窗式)
     function openTagSelectModal(id) {
         currentEditingTaskId = id;
         const t = state.tasks.find(x => x.id === id);
         const list = document.getElementById('tagSelectList');
         list.innerHTML = '';
-
-        // 构建选项数据
         const options = [
             { value: 'daily_important', text: '◆ 每日正事' },
             { value: 'daily_trivial', text: '◇ 日常琐事' },
             ...state.goals.map(g => ({ value: g.id, text: `◎ 愿景: ${g.name}` }))
         ];
-
-        // 渲染选项列表
         options.forEach(opt => {
             const li = document.createElement('li');
             li.className = `select-modal-item ${t.tag === opt.value ? 'active' : ''}`;
@@ -363,21 +346,23 @@
             li.onclick = () => confirmTaskTagChange(opt.value);
             list.appendChild(li);
         });
-
         document.getElementById('tagSelectModal').style.display = 'flex';
     }
 
     function confirmTaskTagChange(newTag) {
         if (!currentEditingTaskId) return;
         const t = state.tasks.find(x => x.id === currentEditingTaskId);
-        if (t) {
-            t.tag = newTag;
-            // 如果切换了类别，是否自动重置分值？这里选择保留原分值，或者可以加逻辑重置
-            // 比如：如果切到琐事，t.val = 5; 但为了灵活，暂不强制重置
-            save();
-        }
+        if (t) { t.tag = newTag; save(); }
         document.getElementById('tagSelectModal').style.display = 'none';
         currentEditingTaskId = null;
+    }
+
+    // 任务直接删除 (不影响分数)
+    function deleteTask(id) {
+        if(confirm("确定移除此任务？(不会扣除已获得的分数)")) {
+            state.tasks = state.tasks.filter(x => x.id !== id);
+            save();
+        }
     }
 
     function doTask(id) {
@@ -402,7 +387,7 @@
 
     function undoLastAction() {
         const lastLog = state.history.pop();
-        if (!lastLog || lastLog.actionType !== 'task') { alert("无最近可撤回的任务操作"); return; }
+        if (!lastLog || lastLog.actionType !== 'task') { alert("无可撤回的操作"); return; }
         state.score -= Math.floor(lastLog.impact);
         if (lastLog.tag.startsWith('g')) {
             const g = state.goals.find(x => x.id === lastLog.tag);
@@ -464,14 +449,12 @@
     function render() {
         const tagSelect = document.getElementById('tTag');
         const currentSelection = tagSelect.value; 
-
         let optionsHtml = `
             <option value="daily_important">◆ 每日正事 (10pts)</option>
             <option value="daily_trivial">◇ 日常琐事 (5pts)</option>
         `;
         optionsHtml += state.goals.map(g => `<option value="${g.id}">◎ 愿景: ${g.name}</option>`).join('');
         tagSelect.innerHTML = optionsHtml;
-
         if (currentSelection && Array.from(tagSelect.options).some(o => o.value === currentSelection)) {
             tagSelect.value = currentSelection;
         } else {
@@ -481,8 +464,8 @@
         document.getElementById('goalContainer').innerHTML = state.goals.map(g => `
             <div style="margin-bottom:25px;">
                 <div class="flex-row" style="justify-content:space-between; margin-bottom:8px;">
-                    <span class="highlight-text" style="font-family: 'Times New Roman'; letter-spacing:1px;">${g.name}</span>
-                    <span class="del-x" onclick="deleteGoal('${g.id}')">×</span>
+                    <span class="highlight-text editable" onclick="editGoalName('${g.id}')" title="点击修改名称">${g.name}</span>
+                    <span class="del-x" onclick="deleteGoal('${g.id}')" title="删除愿景">×</span>
                 </div>
                 <div class="flex-row" style="justify-content:space-between; align-items:flex-end;">
                     <div class="progress-container" style="margin:0; width:82%"><div class="progress-fill" style="width:${g.progress}%"></div></div>
@@ -509,7 +492,10 @@
                         <span class="editable" onclick="event.stopPropagation(); editTaskTarget(${t.id})" title="修改次数">${t.target}</span>
                     </div>
                 </div>
-                <div class="drag-handle">≡</div>
+                <div class="flex-row" style="gap:5px;">
+                    <div class="drag-handle" title="拖动排序">≡</div>
+                    <div class="task-del-btn" onclick="deleteTask(${t.id})" title="删除任务">×</div>
+                </div>
             </div>
         `}).join('');
 
